@@ -6,11 +6,11 @@ WORKDIR /app
 # Install build tools for native modules (tree-sitter C++ bindings)
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
-COPY package.json package-lock.json ./
+COPY server/package.json server/package-lock.json ./
 RUN npm ci --legacy-peer-deps
 
-COPY tsconfig.json ./                                                                                                                                                                                                   
-COPY src/ ./src/
+COPY server/tsconfig.json ./                                                                                                                                                                                                   
+COPY server/src/ ./src/
 
 # Compile TypeScript
 RUN npm run build
@@ -30,7 +30,7 @@ WORKDIR /app
 # tree-sitter native bindings need libstdc++ at runtime
 RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 && rm -rf /var/lib/apt/lists/*
 
-COPY package.json ./
+COPY server/package.json ./
 
 # Copy pre-built node_modules (with native bindings already compiled) from builder
 COPY --from=builder /app/node_modules ./node_modules
