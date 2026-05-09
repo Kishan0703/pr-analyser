@@ -1,5 +1,10 @@
 {
   "rewrites": [
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
-  ]
+    {
+      "source": "/((?!assets/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "outputDirectory": "dist",
+  "buildCommand": "npm install && npm run build"
 }
