@@ -1,7 +1,104 @@
+# ── Render Blueprint ──
+# Creates: Redis + Backend (Docker) + Frontend (Static Site)
+# MongoDB is external (Atlas) — paste URI in env vars after first deploy.
+
+databases: []
+
 services:
+  # ── Backend API (Docker) ──
   - type: web
-    name: my-new-app
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    name: lgtm-server
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    region: oregon
+    plan: starter
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_APP_PRIVATE_KEY
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      - key: GITHUB_APP_SLUG
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: lgtm-redis
+          type: redis
+          property: connectionString
+      - key: CLIENT_URL
+        sync: false
+      - key: API_URL
+        sync: false
+      - key: WEBHOOK_BASE_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: DODO_PAYMENTS_API_KEY
+        sync: false
+      - key: DODO_WEBHOOK_SECRET
+        sync: false
+      - key: DODO_PRODUCT_ID
+        sync: false
+      - key: DODO_ENV
+        sync: false
+
+  # ── Frontend (Static Site) ──
+  - type: web
+    name: lgtm-client
+    runtime: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/dist
+    branch: main
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_SENTRY_DSN
+        sync: false
+      - key: VITE_DODO_ENV
+        sync: false
+
+# ── Redis ──
+  - type: redis
+    name: lgtm-redis
     plan: free
+    region: oregon
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
